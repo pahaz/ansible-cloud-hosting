@@ -1,8 +1,7 @@
 ---
 
-- name: restart swarm
+- name: 'restart swarm'
   docker:
-    docker_api_version: '{{ docker_api_version }}'
     image: '{{ docker_swarm_image }}'
-    name: docker-swarm-manager
+    name: '{{ docker_swarm_container_name }}'
     state: restarted

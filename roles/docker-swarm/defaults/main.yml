@@ -1,3 +1,9 @@
 ---
 
-docker_swarm_image: 'swarm:latest'
+docker_swarm_image: 'swarm:1.2.3'
+
+docker_swarm_container_name: swarm-agent
+docker_swarm_host_ip: "{{ ansible_eth0.ipv4.address }}"
+docker_swarm_discovery: "consul://{{ docker_consul_host_ip }}:8500"
+docker_swarm_env:
+  CONSUL_HTTP_TOKEN: '{{ docker_consul_acl_master_token }}'
