@@ -1,7 +1,32 @@
 ---
 
+# docker
+docker_key_server: "hkp://pgp.mit.edu:80"
+docker_key_id: "58118E89F3A912897C070ADBF76221572C52609D"
+
 docker_tls_dir: '/etc/docker/tls'
 docker_tls_ca_cert_file: '/etc/docker/tls/ca.pem'
 docker_tls_ca_key_file: '/etc/docker/tls/ca-key.pem'
 docker_tls_server_cert_file: '/etc/docker/tls/server-cert.pem'
 docker_tls_server_key_file: '/etc/docker/tls/server-key.pem'
+docker_tls_local_ca_cert_file: 'certs/ca.pem'
+docker_tls_local_ca_key_file: 'certs/ca-key.pem'
+docker_tls_local_certs_ca_password: ''
+
+docker_host_ip: '{{ ansible_eth0.ipv4.address }}'
+docker_cluster_store: 'consul://{{ docker_host_ip }}:8500'
+docker_dns_search: 'service.consul'
+docker_dns_servers:
+  - '127.0.0.1'
+  - '{{ docker_host_ip }}'
+  - '8.8.8.8'
+
+docker_hosts:
+  - 'fd://'
+  - 'tcp://{{ docker_host_ip }}:2376'
+
+docker_allow_connect_from_hosts:
+  - '{{ docker_host_ip }}'
+  - '127.0.0.1'
+
+docker_options: "{% for dns in docker_dns_servers %} --dns {{dns}}{% endfor %} --dns-search {{ docker_dns_search }} --userland-proxy=false {% for host in docker_hosts %} -H {{ host }}{% endfor %} --cluster-store={{ docker_cluster_store }} --tlsverify --tlscacert={{ docker_tls_ca_cert_file }} --tlscert={{ docker_tls_server_cert_file }} --tlskey={{ docker_tls_server_key_file }}"

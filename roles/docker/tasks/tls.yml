@@ -2,7 +2,7 @@
 # See: http://docs.docker.com/articles/https/
 
 - name: creates directories
-  file: 
+  file:
     state: directory
     path: '{{ docker_tls_dir }}'
     mode: 0400
@@ -18,8 +18,8 @@
     mode: 0400
     owner: root
   with_items:
-    - { src: certs/ca/ca.pem, dest: '{{ docker_tls_ca_cert_file }}' }
-    - { src: certs/ca/ca-key.pem, dest: '{{ docker_tls_ca_key_file }}' }
+    - { src: '{{ docker_tls_local_ca_cert_file }}', dest: '{{ docker_tls_ca_cert_file }}' }
+    - { src: '{{ docker_tls_local_ca_key_file }}', dest: '{{ docker_tls_ca_key_file }}' }
   notify:
     # restart docker if certifications changes
     - restart docker
@@ -32,11 +32,11 @@
     creates: '{{ docker_tls_server_key_file }}'
   notify:
     # restart docker if key changes
-    - restart docker
+    - 'restart docker'
 
 
 - name: creates certificate signing request
-  command: 'openssl req -subj "/CN={{ ansible_fqdn }}" -sha256 -new -key {{ docker_tls_server_key_file }} -out {{ docker_tls_dir }}/server.csr'
+  command: 'openssl req -subj "/CN={{ inventory_hostname }}" -sha256 -new -key {{ docker_tls_server_key_file }} -out {{ docker_tls_dir }}/server.csr'
   args:
     chdir: '{{ docker_tls_dir }}'
     creates: '{{ docker_tls_dir }}/server.csr'
@@ -49,11 +49,19 @@
 
 
 - name: generates certificate
-  command: 'openssl x509 -req -days 365 -sha256 -in {{ docker_tls_dir }}/server.csr -CA {{ docker_tls_ca_cert_file }} -CAkey {{ docker_tls_ca_key_file }} -CAcreateserial -out {{ docker_tls_server_cert_file }} -extfile {{ docker_tls_dir }}/server-extfile.cnf -passin "pass:{{ certs_ca_password }}"'
+  command: 'openssl x509 -req -days 365 -sha256 -in {{ docker_tls_dir }}/server.csr -CA {{ docker_tls_ca_cert_file }} -CAkey {{ docker_tls_ca_key_file }} -CAcreateserial -out {{ docker_tls_server_cert_file }} -extfile {{ docker_tls_dir }}/server-extfile.cnf -passin "pass:{{ docker_tls_local_certs_ca_password }}"'
   args:
     chdir: '{{ docker_tls_dir }}'
     creates: '{{ docker_tls_server_cert_file }}'
   notify:
     # restart docker if certificate changes
-    - restart docker
+    - 'restart docker'
 
+
+# See: http://docs.docker.com/articles/https/
+# After generating cert.pem and server-cert.pem you can safely remove the two certificate signing requests:
+# $ rm -v client.csr server.csr
+# $ chmod -v 0400 ca-key.pem key.pem server-key.pem
+
+# - name: remove server.csr
+# TODO: THIS!

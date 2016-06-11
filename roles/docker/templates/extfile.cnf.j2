@@ -1,1 +1,1 @@
-subjectAltName = IP:{{ ansible_eth0.ipv4.address }},IP:127.0.0.1
+subjectAltName = {% for host in docker_allow_connect_from_hosts %}IP:{{ host }}{% if not loop.last %},{% endif %}{% endfor %}

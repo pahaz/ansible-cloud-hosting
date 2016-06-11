@@ -8,7 +8,7 @@
 
 
 - name: configures apt sources
-  template: 
+  template:
     src: 'docker.list.j2'
     dest: '/etc/apt/sources.list.d/docker.list'
     owner: root
@@ -16,7 +16,7 @@
 
 
 - name: installs 'docker'
-  apt: 
+  apt:
     name: docker-engine
     update_cache: yes
     cache_valid_time: 0
@@ -30,15 +30,25 @@
 
 # Required for 'docker' ansible module
 - name: installs 'docker-py'
-  pip: 
+  pip:
     name: docker-py
+#    state: latest
 
 
 - include: tls.yml
 
 
+#- name: change 'docker' daemon options for init.d
+#  template:
+#    src: "etc.default.docker.j2"
+#    dest: "/etc/default/docker"
+#  notify:
+#    - 'daemon-reload'
+#    - 'restart docker'
+
+
 - name: creates directory
-  file: 
+  file:
     state: directory
     path: '/etc/systemd/system/docker.service.d/'
 
