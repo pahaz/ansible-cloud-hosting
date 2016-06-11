@@ -4,4 +4,4 @@
 # See: https://registry.hub.docker.com/_/swarm/
 
 - include: manager.yml
-  when: docker_swarm_manager_ip == ansible_eth0.ipv4.address # if manager host
+  when: docker_swarm_manager_master_ip == docker_swarm_manager_host_ip

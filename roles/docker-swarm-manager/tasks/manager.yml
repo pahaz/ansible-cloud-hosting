@@ -1,88 +1,31 @@
 # See: http://docs.docker.com/articles/https/
 
-- name: creates directories
-  file: 
-    state: directory
-    path: '{{ docker_swarm_tls_dir }}'
-    mode: 0400
-    owner: root
-  with_items:
-    - '{{ docker_swarm_tls_dir }}'
 
-
-- name: uploads certifications
-  copy:
-    src: '{{ item.src }}'
-    dest: '{{ item.dest }}'
-    mode: 0400
-    owner: root
-  with_items:
-    - { src: 'certs/ca/ca.pem', dest: '{{ docker_swarm_tls_ca_cert_file }}' }
-    - { src: 'certs/ca/ca-key.pem', dest: '{{ docker_swarm_tls_ca_key_file }}' }
-  # restart docker if certifications changes
-  notify: restart swarm-manager
-
-
-- name: generates RSA private key
-  command: 'openssl genrsa -out {{ docker_swarm_tls_client_key_file }} 4096'
-  args:
-    chdir: '{{ docker_swarm_tls_dir }}'
-    creates: '{{ docker_swarm_tls_client_key_file }}'
-  # restart docker if key changes
-  notify: restart swarm-manager
-
-
-- name: creates certificate signing request
-  command: 'openssl req -subj "/CN={{ ansible_fqdn }}" -sha256 -new -key {{ docker_swarm_tls_client_key_file }} -out {{ docker_swarm_tls_dir }}/client.csr'
-  args:
-    chdir: '{{ docker_swarm_tls_dir }}'
-    creates: '{{ docker_swarm_tls_dir }}/client.csr'
-
-
-- name: uploads "extfile.cnf" configuration file
-  template:
-    src: 'extfile.cnf.j2'
-    dest: '{{ docker_swarm_tls_dir }}/extfile.cnf'
-
-
-- name: generates certificate
-  command: 'openssl x509 -req -days 365 -sha256 -in {{ docker_swarm_tls_dir }}/client.csr -CA {{ docker_swarm_tls_ca_cert_file }} -CAkey {{ docker_swarm_tls_ca_key_file }} -CAcreateserial -out {{ docker_swarm_tls_client_cert_file }} -extfile {{ docker_swarm_tls_dir }}/extfile.cnf -passin "pass:{{ certs_ca_password }}"'
-  args:
-    chdir: '{{ docker_swarm_tls_dir }}'
-    creates: '{{ docker_swarm_tls_client_cert_file }}'
-  notify:
-    # restart docker if certificate changes
-    - restart swarm-manager
+#- include: tls.yml
 
 
 - name: retrieves and launches 'docker swarm' image
-  docker:
-    docker_api_version: '{{ docker_api_version }}'
+  docker_container:
     image: '{{ docker_swarm_manager_image }}'
     ports:
-      - '{{ ansible_eth0.ipv4.address }}:8000:2375'
+      - '{{ docker_swarm_manager_host_ip }}:8000:2375'
     volumes:
       # tls
-      - '{{ docker_swarm_tls_dir }}:{{ docker_swarm_tls_dir }}'
-    hostname: '{{ ansible_hostname }}'
-    name: docker-swarm-manager
-    command: 'manage --tlsverify --tlscacert={{ docker_swarm_tls_ca_cert_file }} --tlscert={{ docker_swarm_tls_client_cert_file }} --tlskey={{ docker_swarm_tls_client_key_file }} consul://{{ ansible_eth0.ipv4.address }}:8500/swarm'
+      - '{{ docker_swarm_manager_tls_dir }}:{{ docker_swarm_manager_tls_dir }}'
+    hostname: '{{ inventory_hostname }}'
+    name: '{{ docker_swarm_manager_container_name }}'
+    env: '{{ docker_swarm_manager_env }}'
+    command:
+      - 'manage'
+      - '--tlsverify'
+      - '--tlscacert={{ docker_swarm_manager_tls_ca_cert_file }}'
+      - '--tlscert={{ docker_swarm_manager_tls_server_cert_file }}'
+      - '--tlskey={{ docker_swarm_manager_tls_server_key_file }}'
+      - '{{ docker_swarm_manager_discovery }}'
     state: started
     # will be checked for a newer version of the image each time the task executes
-    pull: always
+    pull: yes
     # try to restart if the container exits
     restart_policy: always
     # it will try to restart 3 times before giving up
-    restart_policy_retry: 3
-
-
-
-- name: fetches certificates
-  fetch:
-    src: '{{ item.src }}'
-    dest: '{{ item.dest }}'
-    flat: yes
-  with_items:
-    - { src: '{{ docker_swarm_tls_client_cert_file }}', dest: 'certs/docker/cert.pem' }
-    - { src: '{{ docker_swarm_tls_client_key_file }}', dest: 'certs/docker/key.pem' }
-
+    restart_retries: 3

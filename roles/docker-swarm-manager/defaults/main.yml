@@ -1,10 +1,32 @@
 ---
 
-docker_swarm_manager_image: 'swarm:latest'
+docker_swarm_manager_image: 'swarm:1.2.3'
 
-docker_swarm_tls_enabled: yes
-docker_swarm_tls_dir: '/etc/docker/ssl'
-docker_swarm_tls_ca_cert_file: '/etc/docker/ssl/ca.pem'
-docker_swarm_tls_ca_key_file: '/etc/docker/ssl/ca-key.pem'
-docker_swarm_tls_client_cert_file: '/etc/docker/ssl/cert.pem'
-docker_swarm_tls_client_key_file: '/etc/docker/ssl/key.pem'
+# use self certs!
+#docker_swarm_manager_tls_dir: '/etc/docker-swarm-manager/tls'
+#docker_swarm_manager_tls_ca_cert_file: '/etc/docker-swarm-manager/tls/ca.pem'
+#docker_swarm_manager_tls_ca_key_file: '/etc/docker-swarm-manager/tls/ca-key.pem'
+#docker_swarm_manager_tls_server_cert_file: '/etc/docker-swarm-manager/tls/server-swarm-cert.pem'
+#docker_swarm_manager_tls_server_key_file: '/etc/docker-swarm-manager/tls/server-swarm-key.pem'
+
+# use docker certs!
+docker_swarm_manager_tls_dir: '/etc/docker/tls'
+docker_swarm_manager_tls_ca_cert_file: '/etc/docker/tls/ca.pem'
+docker_swarm_manager_tls_ca_key_file: '/etc/docker/tls/ca-key.pem'
+docker_swarm_manager_tls_server_cert_file: '/etc/docker/tls/server-cert.pem'
+docker_swarm_manager_tls_server_key_file: '/etc/docker/tls/server-key.pem'
+
+docker_swarm_manager_tls_local_ca_cert_file: 'certs/ca.pem'
+docker_swarm_manager_tls_local_ca_key_file: 'certs/ca-key.pem'
+docker_swarm_manager_tls_local_certs_ca_password: ''
+
+docker_swarm_manager_container_name: swarm-manager
+docker_swarm_manager_host_ip: "{{ ansible_eth0.ipv4.address }}"
+docker_swarm_manager_discovery: "consul://{{ docker_consul_host_ip }}:8500"
+docker_swarm_manager_env:
+  CONSUL_HTTP_TOKEN: '{{ docker_consul_acl_master_token }}'
+docker_swarm_manager_allow_connect_from_hosts:
+  - '{{ docker_swarm_manager_host_ip }}'
+  - '127.0.0.1'
+
+docker_swarm_manager_master_ip: ''
