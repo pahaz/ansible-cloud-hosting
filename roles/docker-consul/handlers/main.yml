@@ -1,8 +1,7 @@
 ---
 
-- name: restart consul
+- name: 'restart consul'
   docker:
-    docker_api_version: '{{ docker_api_version }}'
     image: '{{ docker_consul_image }}'
-    name: consul
+    name: '{{ docker_consul_container_name }}'
     state: restarted

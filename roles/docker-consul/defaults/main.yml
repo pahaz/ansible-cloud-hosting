@@ -1,9 +1,21 @@
 ---
 
-docker_consul_image: 'progrium/consul:latest'
+docker_consul_image: 'consul:v0.6.4'
 
+docker_consul_tls_local_ca_cert_file: 'certs/ca.cert'
+docker_consul_tls_local_client_cert_file: 'certs/consul.cert'
+docker_consul_tls_local_client_key_file: 'certs/consul.key'
 docker_consul_tls_dir: '/etc/consul/ssl/'
 docker_consul_tls_ca_cert_file: '/etc/consul/ssl/ca.cert'
-docker_consul_tls_ca_key_file: ''
 docker_consul_tls_server_cert_file: '/etc/consul/ssl/consul.cert'
 docker_consul_tls_server_key_file: '/etc/consul/ssl/consul.key'
+docker_consul_dc: "dc1"
+docker_consul_host_ip: "{{ ansible_eth0.ipv4.address }}"
+docker_consul_dns_host_ip: "{{ ansible_docker0.ipv4.address }}"
+docker_consul_disable_remote_exec: no
+docker_consul_container_name: consul-agent
+
+docker_consul_join: ''
+docker_consul_encrypt: ''
+docker_consul_start_join: ''
+docker_consul_acl_master_token: ''

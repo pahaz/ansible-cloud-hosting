@@ -1,0 +1,19 @@
+- name: creates consul cert directories
+  file:
+    state: directory
+    path: '{{ docker_consul_tls_dir }}'
+
+
+- name: uploads certifications
+  copy:
+    src: '{{ item.src }}'
+    dest: '{{ item.dest }}'
+    # TODO (secure): !! https://github.com/docker/docker/issues/2259
+    mode: 0444
+  with_items:
+    - { src: '{{ docker_consul_tls_local_ca_cert_file }}', dest: '{{ docker_consul_tls_ca_cert_file }}' }
+    - { src: '{{ docker_consul_tls_local_client_cert_file }}', dest: '{{ docker_consul_tls_server_cert_file }}' }
+    - { src: '{{ docker_consul_tls_local_client_key_file }}', dest: '{{ docker_consul_tls_server_key_file }}' }
+  notify:
+    # restart consul if certifications changes
+    - 'restart consul'

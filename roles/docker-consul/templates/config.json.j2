@@ -1,23 +1,26 @@
 {
     "bootstrap": false,
     "server": true,
+    "node_name": "{{ inventory_hostname }}",
     "datacenter": "{{ docker_consul_dc }}",
     "client_addr": "0.0.0.0",
-    "data_dir": "/data",
-    "ui_dir": "/ui",
-    "ports": {
-      "https": 8543
-    },
+    "data_dir": "/consul/data",
+    "ui": true,
     "encrypt": "{{ docker_consul_encrypt }}",
-    "ca_file": "/etc/consul.d/ssl/ca.cert",
-    "cert_file": "/etc/consul.d/ssl/consul.cert",
-    "key_file": "/etc/consul.d/ssl/consul.key",
+    "ca_file": "/consul/ssl/ca.cert",
+    "cert_file": "/consul/ssl/consul.cert",
+    "key_file": "/consul/ssl/consul.key",
     "verify_incoming": true,
     "verify_outgoing": true,
-    "log_level": "INFO",
     "enable_syslog": false,
-    "start_join_wan": [
-        {% for item in docker_consul_start_join_wan %}
+    "disable_remote_exec": {% if docker_consul_disable_remote_exec %}true{% else %}false{% endif %},
+    "acl_datacenter": "{{ docker_consul_dc }}",
+    "acl_master_token": "{{ docker_consul_acl_master_token }}",
+    "acl_default_policy": "deny",
+    "acl_down_policy": "deny",
+    "rejoin_after_leave": true,
+    "start_join": [
+        {% for item in docker_consul_start_join %}
             "{{ item }}"{% if not loop.last %},{% endif %}
         {% endfor %}
     ]
